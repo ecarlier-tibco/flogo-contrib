@@ -1,48 +1,128 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 
-	"github.com/TIBCOSoftware/flogo-contrib/trigger/lambda"
-	"github.com/eawsy/aws-lambda-go-core/service/lambda/runtime"
+	fl "github.com/TIBCOSoftware/flogo-contrib/trigger/lambda"
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-lambda-go/lambdacontext"
 )
 
+const (
+	APIGW uint = 1 + iota
+)
 
-func Handle(evt json.RawMessage, ctx *runtime.Context) (string, error) {
-	err := setupArgs(evt, ctx)
+// Handle implements the Flogo Function handler
+func Handle(ctx context.Context, evt json.RawMessage) (interface{}, error) {
+	err := setupArgs(evt, &ctx)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	result, err := lambda.Invoke()
+
+	// Get the actual lambda event object. Right now just using the evt typ to return the correct response.
+	// This does not impact the event in the action (flow)
+	evtTyp, _ := getEvtType(evt)
+
+	// Invoke the flogo lambda trigger and handle the event
+	result, err := fl.Invoke()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return result, nil
+
+	return coerceResponseObj(result, evtTyp)
 }
 
-func setupArgs(evt json.RawMessage, ctx *runtime.Context) error {
+func getEvtType(raw json.RawMessage) (uint, interface{}) {
+	var evt map[string]interface{}
+	if err := json.Unmarshal(raw, &evt); err != nil {
+		return 0, nil
+	}
+
+	if _, ok := evt["requestContext"]; ok {
+		apiGw := events.APIGatewayProxyRequest{}
+		json.Unmarshal(raw, &apiGw)
+		return APIGW, apiGw
+	}
+
+	return 0, nil
+}
+
+func coerceResponseObj(result map[string]interface{}, evtTyp uint) (interface{}, error) {
+	var returnObj interface{}
+
+	responseData := result["data"]
+	statusCode := result["status"].(int)
+
+	// Marshal the response
+	responseRaw, err := json.Marshal(responseData)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if API GW request. If so, build the correct response
+	switch evtTyp {
+	case APIGW:
+		returnObj = events.APIGatewayProxyResponse{
+			StatusCode: func() int {
+				if statusCode == 0 {
+					return 200
+				} else {
+					return statusCode
+				}
+			}(),
+			Body:            string(responseRaw),
+			IsBase64Encoded: false,
+		}
+
+	default:
+		returnObj = responseData
+	}
+
+	return returnObj, nil
+}
+
+func setupArgs(evt json.RawMessage, ctx *context.Context) error {
+	// Setup environment argument
+	evtJSON, err := json.Marshal(&evt)
+	if err != nil {
+		return err
+	}
+
 	evtFlag := flag.Lookup("evt")
 	if evtFlag == nil {
-		// Setup environment argument
-		evtJson, err := json.Marshal(&evt)
-		if err != nil {
-			return err
-		}
-		flag.String("evt", string(evtJson), "Lambda Environment Arguments")
+		flag.String("evt", string(evtJSON), "Lambda Environment Arguments")
+	} else {
+		flag.Set("evt", string(evtJSON))
 	}
+
+	// Setup context argument
+	ctxObj, _ := lambdacontext.FromContext(*ctx)
+	lambdaContext := map[string]interface{}{
+		"logStreamName":   lambdacontext.LogStreamName,
+		"logGroupName":    lambdacontext.LogGroupName,
+		"functionName":    lambdacontext.FunctionName,
+		"functionVersion": lambdacontext.FunctionVersion,
+		"awsRequestId":    ctxObj.AwsRequestID,
+		"memoryLimitInMB": lambdacontext.MemoryLimitInMB,
+	}
+	ctxJSON, err := json.Marshal(lambdaContext)
+	if err != nil {
+		return err
+	}
+
 	ctxFlag := flag.Lookup("ctx")
 	if ctxFlag == nil {
-		// Setup context argument
-		ctxJson, err := json.Marshal(ctx)
-		if err != nil {
-			return err
-		}
-		flag.String("ctx", string(ctxJson), "Lambda Context Arguments")
+		flag.String("ctx", string(ctxJSON), "Lambda Context Arguments")
+	} else {
+		flag.Set("ctx", string(ctxJSON))
 	}
+
 	return nil
 }
 
 func main() {
-	// No Op
+	lambda.Start(Handle)
 }

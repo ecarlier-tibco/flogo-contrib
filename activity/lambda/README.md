@@ -1,9 +1,15 @@
-# tibco-lambda
-This activity provides native Lambda invocation capabilities to your Flogo apps. You can invoke a lambda function via ARN and provide the access key and secret for authentication.
+---
+title: Trigger Lambda Function
+weight: 4614
+---
 
+# Trigger Lambda function
+This activity allows you to invoke an AWS Lambda function via ARN and provide the access key and secret for authentication.
 
 ## Installation
-
+### Flogo Web
+This activity comes out of the box with the Flogo Web UI
+### Flogo CLI
 ```bash
 flogo add activity github.com/TIBCOSoftware/flogo-contrib/activity/lambda
 ```
@@ -13,7 +19,7 @@ Inputs and Outputs:
 
 ```json
 {
-"inputs":[
+  "input":[
     {
       "name": "arn",
       "type": "string",
@@ -40,22 +46,34 @@ Inputs and Outputs:
       "required" : true
     }
   ],
-  "outputs": [
+  "output": [
     {
       "name": "value",
       "type": "any"
+    },
+    {
+      "name": "result",
+      "type": "any"
+    },
+    {
+      "name": "status",
+      "type": "integer"
     }
   ]
 }
 ```
-## Settings
-| Setting     | Description                                    |
-|:------------|:-----------------------------------------------|
-| arn         | The ARN for the Lambda function to invoke      |
-| region      | The AWS region                                 |
-| accessKey   | Access key for the user to invoke the function |
-| secretKey   | The users secret key                           |
-| payload     | The payload. A JSON object.                    |
 
-## Output
-The output is a struct containing the Status and response Payload from the function.
+## Settings
+| Setting     | Required | Description |
+|:------------|:---------|:------------|
+| arn         | True     | The ARN of the Lambda function to invoke      |
+| region      | True     | The AWS region in which you want to invoke the function |
+| accessKey   | False    | AWS access key for the user to invoke the function |
+| secretKey   | False    | AWS secret key for the user to invoke te function |
+| payload     | True     | The payload to send to the function. This must be a valid JSON object. |
+| value       | False    | A struct containing the status and response    |
+| result      | False    | The response from the invocation |
+| status      | False    | The status of the invocation |
+
+## Examples
+Coming soon...

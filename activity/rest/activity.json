@@ -6,7 +6,7 @@
   "title": "Invoke REST Service",
   "description": "Simple REST Activity",
   "homepage": "https://github.com/TIBCOSoftware/flogo-contrib/tree/master/activity/rest",
-  "inputs":[
+  "input":[
     {
       "name": "method",
       "type": "string",
@@ -19,6 +19,11 @@
       "required": true
     },
     {
+      "name": "proxy",
+      "type": "string",
+      "required": false
+    },
+    {
       "name": "pathParams",
       "type": "params"
     },
@@ -27,11 +32,20 @@
       "type": "params"
     },
     {
+      "name": "header",
+      "type": "params"
+    },
+    {
+      "name": "skipSsl",
+      "type": "boolean",
+      "value": "false"
+    },
+    {
       "name": "content",
       "type": "any"
     }
   ],
-  "outputs": [
+  "output": [
     {
       "name": "result",
       "type": "any"

@@ -30,35 +30,30 @@ Collection of Flogo activities, triggers and models.
 Example: install **log** activity
 
 ```bash
-flogo add activity github.com/TIBCOSoftware/flogo-contrib/activity/log
+flogo install github.com/TIBCOSoftware/flogo-contrib/activity/log
 ```
 #### Install Trigger
 Example: install **rest** trigger
 
 ```bash
-flogo add trigger github.com/TIBCOSoftware/flogo-contrib/trigger/rest
+flogo install github.com/TIBCOSoftware/flogo-contrib/trigger/rest
 ```
 #### Install Model
 Example: install **simple** model
 
 ```bash
-flogo add model github.com/TIBCOSoftware/flogo-contrib/model/simple
+flogo install github.com/TIBCOSoftware/flogo-contrib/model/simple
 ```
 
 ## Contributing and support
 
 ### Contributing
 
-New activites, triggers and models are welcome. If you would like to submit one, contact us via [Slack](https://tibco-cloud.slack.com/messages/flogo-general/).  Contributions should follow these guidelines:
-
-* Code must be [gofmt](https://golang.org/cmd/gofmt/) compliant.
-* Execute [golint](https://github.com/golang/lint) on your code.
-* Document all funcs, structs and types.
-* Ensure that 'go test' succeeds.
+New activites, triggers and models are welcomed. If you would like to contribute, please following the [contribution guidelines](https://github.com/TIBCOSoftware/flogo/blob/master/CONTRIBUTING.md). If you have any questions, issues, etc feel free to chat with us on [Gitter](https://gitter.im/project-flogo/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link).
 
 ## License
 flogo-contrib is licensed under a BSD-type license. See TIBCO LICENSE.txt for license text.
 
 ### Support
-For Q&A you can post your questions on [Slack](https://tibco-cloud.slack.com/messages/flogo-general/)
+For Q&A you can post your questions on [Gitter](https://gitter.im/project-flogo/Lobby?utm_source=share-link&utm_medium=link&utm_campaign=share-link)
 

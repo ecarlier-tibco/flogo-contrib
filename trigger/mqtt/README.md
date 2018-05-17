@@ -1,3 +1,7 @@
+---
+title: MQTT
+weight: 4705
+---
 # tibco-mqtt
 This trigger provides your flogo application the ability to start a flow via MQTT
 
@@ -69,7 +73,7 @@ Configure the Trigger to start "myflow". "settings" "topic" is the topic it uses
 {
   "triggers": [
     {
-      "name": "tibco-mqtt",
+      "name": "flogo-mqtt",
       "settings": {
         "topic": "flogo/#",
         "broker": "tcp://192.168.1.12:1883",

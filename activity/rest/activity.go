@@ -2,6 +2,7 @@ package rest
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"io"
 	"io/ioutil"
@@ -27,8 +28,11 @@ const (
 	ivURI         = "uri"
 	ivPathParams  = "pathParams"
 	ivQueryParams = "queryParams"
+	ivHeader      = "header"
 	ivContent     = "content"
 	ivParams      = "params"
+	ivProxy       = "proxy"
+	ivSkipSsl     = "skipSsl"
 
 	ovResult = "result"
 	ovStatus = "status"
@@ -78,9 +82,7 @@ func (a *RESTActivity) Eval(context activity.Context) (done bool, err error) {
 		uri = BuildURI(uri, pathParams)
 	}
 
-	if context.GetInput(ivQueryParams) != nil {
-		queryParams := context.GetInput(ivQueryParams).(map[string]string)
-
+	if queryParams, ok := context.GetInput(ivQueryParams).(map[string]string); ok && len(queryParams) > 0 {
 		qp := url.Values{}
 
 		for key, value := range queryParams {
@@ -115,16 +117,54 @@ func (a *RESTActivity) Eval(context activity.Context) (done bool, err error) {
 	}
 
 	req, err := http.NewRequest(method, uri, reqBody)
+
+	if err != nil {
+		return false, err
+	}
+
 	if reqBody != nil {
 		req.Header.Set("Content-Type", contentType)
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		panic(err)
+	// Set headers
+	log.Debug("Setting HTTP request headers...")
+	if headers, ok := context.GetInput(ivHeader).(map[string]string); ok && len(headers) > 0 {
+		for key, value := range headers {
+			log.Debugf("%s: %s", key, value)
+			req.Header.Set(key, value)
+		}
 	}
+
+	httpTransportSettings := &http.Transport{}
+
+	// Set the proxy server to use, if supplied
+	proxy := context.GetInput(ivProxy)
+	var client *http.Client
+	var proxyValue, ok = proxy.(string)
+	if ok && len(proxyValue) > 0 {
+		proxyURL, urlErr := url.Parse(proxyValue)
+		if urlErr != nil {
+			log.Debug("Error parsing proxy url:", urlErr)
+			return false, urlErr
+		}
+
+		log.Debug("Setting proxy server:", proxyValue)
+		httpTransportSettings.Proxy = http.ProxyURL(proxyURL)
+	}
+
+	// Skip ssl validation
+	skipSsl := context.GetInput(ivSkipSsl).(bool)
+	if skipSsl {
+		httpTransportSettings.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+
+	client = &http.Client{Transport: httpTransportSettings}
+	resp, err := client.Do(req)
 	defer resp.Body.Close()
+
+	if err != nil {
+		return false, err
+	}
 
 	log.Debug("response Status:", resp.Status)
 	respBody, _ := ioutil.ReadAll(resp.Body)
@@ -140,7 +180,7 @@ func (a *RESTActivity) Eval(context activity.Context) (done bool, err error) {
 	log.Debug("response Body:", result)
 
 	context.SetOutput(ovResult, result)
-	context.SetOutput(ovStatus, resp.Status)
+	context.SetOutput(ovStatus, resp.StatusCode)
 
 	return true, nil
 }

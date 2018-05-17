@@ -6,7 +6,7 @@
   "title": "Invoke AWS Lambda Function",
   "description": "Invoke AWS Lambda Function via ARN Activity",
   "homepage": "https://github.com/TIBCOSoftware/flogo-contrib/tree/master/activity/lambda",
-  "inputs":[
+  "input":[
     {
       "name": "arn",
       "type": "string",
@@ -33,10 +33,18 @@
       "required" : true
     }
   ],
-  "outputs": [
+  "output": [
     {
       "name": "value",
       "type": "any"
+    },
+    {
+      "name": "result",
+      "type": "any"
+    },
+    {
+      "name": "status",
+      "type": "integer"
     }
   ]
 }

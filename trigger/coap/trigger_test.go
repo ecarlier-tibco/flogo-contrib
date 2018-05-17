@@ -1,18 +1,26 @@
 package coap
 
-import (
-	"context"
-	//"encoding/json"
-	//"net/http"
-	//"testing"
+import "io/ioutil"
 
-	"github.com/TIBCOSoftware/flogo-lib/core/action"
-	//"net/http"
-	//"github.com/TIBCOSoftware/flogo-lib/core/trigger"
-)
+//"encoding/json"
+//"net/http"
+//"testing"
+
+//"net/http"
+//"github.com/TIBCOSoftware/flogo-lib/core/trigger"
+
+var jsonTestMetadata = getTestJsonMetadata()
+
+func getTestJsonMetadata() string {
+	jsonMetadataBytes, err := ioutil.ReadFile("trigger.json")
+	if err != nil {
+		panic("No Json Metadata found for trigger.json path")
+	}
+	return string(jsonMetadataBytes)
+}
 
 const testConfig string = `{
-  "id": "tibco-coap",
+  "id": "flogo-coap",
   "ref": "github.com/TIBCOSoftware/flogo-contrib/trigger/coap",
   "settings": {
     "port": "5683"
@@ -28,15 +36,6 @@ const testConfig string = `{
   ]
 }
 `
-
-type TestRunner struct {
-}
-
-// Run implements action.Runner.Run
-func (tr *TestRunner) Run(context context.Context, action action.Action, uri string, options interface{}) (code int, data interface{}, err error) {
-	log.Debugf("Ran Action: %v", uri)
-	return 0, nil, nil
-}
 
 /*
 // TODO Fix this test

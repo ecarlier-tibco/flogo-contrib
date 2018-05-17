@@ -1,22 +1,12 @@
 package cli
 
 import (
-	"context"
-	//"encoding/json"
-	//"net/http"
-	//"testing"
 	"io/ioutil"
-
-	"github.com/TIBCOSoftware/flogo-lib/core/action"
-	//"github.com/TIBCOSoftware/flogo-lib/core/trigger"
-	"testing"
-	"github.com/TIBCOSoftware/flogo-lib/core/trigger"
-	"net/http"
 )
 
-var jsonMetadata = getJsonMetadata()
+var jsonTestMetadata = getTestJsonMetadata()
 
-func getJsonMetadata() string {
+func getTestJsonMetadata() string {
 	jsonMetadataBytes, err := ioutil.ReadFile("trigger.json")
 	if err != nil {
 		panic("No Json Metadata found for trigger.json path")
@@ -24,8 +14,9 @@ func getJsonMetadata() string {
 	return string(jsonMetadataBytes)
 }
 
+
 const testConfig string = `{
-  "id": "tibco-cli",
+  "id": "flogo-cli",
   "ref": "github.com/TIBCOSoftware/flogo-contrib/trigger/cli",
   "handlers": [
     {
@@ -45,21 +36,12 @@ const testConfig string = `{
 }
 `
 
-type TestRunner struct {
-}
-
-// Run implements action.Runner.Run
-func (tr *TestRunner) Run(context context.Context, action action.Action, uri string, options interface{}) (code int, data interface{}, err error) {
-	log.Debugf("Ran Action: %v", uri)
-	return 0, nil, nil
-}
-
 /*
 //TODO fix this test
 func TestInitOk(t *testing.T) {
 	// New  factory
 	f := &CliTriggerFactory{}
-	tgr := f.New("tibco-cli")
+	tgr := f.New("flogo-cli")
 
 	runner := &TestRunner{}
 
@@ -75,7 +57,7 @@ func TestHandlerOk(t *testing.T) {
 
 	// New  factory
 	f := &CliTriggerFactory{}
-	tgr := f.New("tibco-cli")
+	tgr := f.New("flogo-cli")
 
 	runner := &TestRunner{}
 
@@ -103,4 +85,3 @@ func TestHandlerOk(t *testing.T) {
 	}
 }
 */
-

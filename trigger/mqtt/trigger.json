@@ -1,5 +1,5 @@
 {
-  "name": "tibco-mqtt",
+  "name": "flogo-mqtt",
   "type": "flogo:trigger",
   "ref": "github.com/TIBCOSoftware/flogo-contrib/trigger/mqtt",
   "version": "0.0.1",
@@ -10,11 +10,13 @@
   "settings":[
     {
       "name": "broker",
-      "type": "string"
+      "type": "string",
+      "required": true
     },
     {
       "name": "id",
-      "type": "string"
+      "type": "string",
+      "required": true
     },
     {
       "name": "user",
@@ -34,17 +36,23 @@
     },
     {
       "name": "qos",
-      "type": "number"
+      "type": "double"
     },
     {
       "name": "cleansess",
       "type": "boolean"
     }
   ],
-  "outputs": [
+  "output": [
     {
       "name": "message",
       "type": "string"
+    }
+  ],
+  "reply": [
+    {
+      "name": "data",
+      "type": "object"
     }
   ],
   "handler": {

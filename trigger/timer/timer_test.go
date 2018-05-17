@@ -9,11 +9,14 @@ import (
 
 	"github.com/TIBCOSoftware/flogo-lib/core/action"
 	//"github.com/TIBCOSoftware/flogo-lib/core/trigger"
+	"encoding/json"
+	"github.com/TIBCOSoftware/flogo-lib/core/trigger"
+	"testing"
 )
 
-var jsonMetadata = getJsonMetadata()
+var jsonTestMetadata = getTestJsonMetadata()
 
-func getJsonMetadata() string {
+func getTestJsonMetadata() string {
 	jsonMetadataBytes, err := ioutil.ReadFile("trigger.json")
 	if err != nil {
 		panic("No Json Metadata found for trigger.json path")
@@ -22,7 +25,7 @@ func getJsonMetadata() string {
 }
 
 const testConfig3 string = `{
-  "name": "tibco-timer",
+  "name": "flogo-timer",
   "settings": {
   },
   "endpoints": [
@@ -36,7 +39,7 @@ const testConfig3 string = `{
 }`
 
 const testConfig string = `{
-  "name": "tibco-timer",
+  "name": "flogo-timer",
   "settings": {
   },
   "endpoints": [
@@ -51,7 +54,7 @@ const testConfig string = `{
 }`
 
 const testConfig2 string = `{
-  "name": "tibco-timer",
+  "name": "flogo-timer",
   "settings": {
   },
   "endpoints": [
@@ -67,7 +70,7 @@ const testConfig2 string = `{
 }`
 
 const testConfig4 string = `{
-  "name": "tibco-timer",
+  "name": "flogo-timer",
   "settings": {
   },
   "endpoints": [
@@ -114,20 +117,18 @@ func (tr *TestRunner) Run(context context.Context, action action.Action, uri str
 	return 0, nil, nil
 }
 
-/*
 //TODO fix this test
 func TestInit(t *testing.T) {
 	// New  factory
-	f := &TimerFactory{}
-	tgr := f.New("tibco-timer")
+	//f := &TimerFactory{}
+	//tgr := f.New("flogo-timer")
 
-	runner := &TestRunner{}
+	//runner := &TestRunner{}
 
 	config := trigger.Config{}
 	json.Unmarshal([]byte(testConfig), &config)
-	tgr.Init(config, runner)
+	//tgr.Init(config, runner)
 }
-*/
 
 /*
 //TODO fix this test
@@ -135,7 +136,7 @@ func TestTimer(t *testing.T) {
 
 	// New  factory
 	f := &TimerFactory{}
-	tgr := f.New("tibco-timer")
+	tgr := f.New("flogo-timer")
 
 	tgr.Start()
 	time.Sleep(time.Second * 2)

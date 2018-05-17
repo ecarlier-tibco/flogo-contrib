@@ -1,3 +1,7 @@
+---
+title: Lambda
+weight: 4704
+---
 # tibco-lambda
 This trigger provides your flogo application the ability to start a flow as an AWS Lambda function
 
@@ -14,27 +18,28 @@ Settings, Outputs:
 {
   "settings": [
   ],
-  "outputs": [
+  "output": [
     {
-      "name": "logStreamName",
-      "type": "string"
-    },
-    {
-      "name": "logGroupName",
-      "type": "string"
-    },
-    {
-      "name": "awsRequestId",
-      "type": "string"
-    },
-    {
-      "name": "memoryLimitInMB",
-      "type": "string"
+      "name": "context",
+      "type": "object"
     },
     {
       "name": "evt",
       "type": "string"
     }
   ]
+}
+```
+
+A sample of the context object:
+
+```json
+{
+  "awsRequestId":"",
+  "functionName":"",
+  "functionVersion":"",
+  "logGroupName":"",
+  "logStreamName":"",
+  "memoryLimitInMB":0
 }
 ```

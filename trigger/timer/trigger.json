@@ -1,5 +1,5 @@
 {
-  "name": "tibco-timer",
+  "name": "flogo-timer",
   "type": "flogo:trigger",
   "ref": "github.com/TIBCOSoftware/flogo-contrib/trigger/timer",
   "version": "0.0.1",
@@ -8,7 +8,7 @@
   "homepage": "https://github.com/TIBCOSoftware/flogo-contrib/tree/master/trigger/timer",
   "settings": [
   ],
-  "outputs": [
+  "output": [
     {
       "name": "params",
       "type": "params"
@@ -23,32 +23,30 @@
       {
         "name": "repeating",
         "type": "string",
+        "value": "false",
         "required" : true
       },
       {
         "name": "notImmediate",
         "type": "string",
-        "required" : false
+        "value": "true"
       },
       {
         "name": "startDate",
         "type": "string",
-        "required" : false
+        "value": "2018-01-01T12:00:00Z00:00"
       },
       {
         "name": "hours",
-        "type": "string",
-        "required" : false
+        "type": "string"
       },
       {
         "name": "minutes",
-        "type": "string",
-        "required" : false
+        "type": "string"
       },
       {
         "name": "seconds",
-        "type": "string",
-        "required" : false
+        "type": "string"
       }
     ]
   }

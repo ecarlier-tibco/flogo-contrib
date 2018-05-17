@@ -6,7 +6,7 @@
   "title": "Send CoAP Message",
   "description": "Simple CoAP Activity",
   "homepage": "https://github.com/TIBCOSoftware/flogo-contrib/tree/master/activity/coap",
-  "inputs":[
+  "input":[
     {
       "name": "uri",
       "type": "string",
@@ -38,9 +38,8 @@
       "name": "payload",
       "type": "string"
     }
-
   ],
-  "outputs": [
+  "output": [
     {
       "name": "response",
       "type": "string"

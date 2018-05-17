@@ -1,34 +1,33 @@
 {
-  "name": "tibco-lambda",
+  "name": "flogo-lambda",
   "type": "flogo:trigger",
   "shim": "plugin",
   "ref": "github.com/TIBCOSoftware/flogo-contrib/trigger/lambda",
   "version": "0.0.1",
-  "title": "Start Flow as a function in Lambda",
-  "description": "Simple Lambda Trigger",
+  "title": "Lambda Trigger",
+  "description": "AWS Lambda Trigger used to start a flow as a function.",
   "homepage": "https://github.com/TIBCOSoftware/flogo-contrib/tree/master/trigger/lambda",
   "settings": [
   ],
-  "outputs": [
+  "output": [
     {
-      "name": "logStreamName",
-      "type": "string"
-    },
-    {
-      "name": "logGroupName",
-      "type": "string"
-    },
-    {
-      "name": "awsRequestId",
-      "type": "string"
-    },
-    {
-      "name": "memoryLimitInMB",
-      "type": "string"
+      "name": "context",
+      "type": "object"
     },
     {
       "name": "evt",
-      "type": "any"
+      "type": "object"
+    }
+  ],
+  "reply": [
+    {
+      "name": "data",
+      "type": "object"
+    },
+    {
+      "name": "status",
+      "type": "integer",
+      "value": 200
     }
   ]
 }

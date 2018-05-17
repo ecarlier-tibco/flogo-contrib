@@ -6,23 +6,22 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/TIBCOSoftware/flogo-contrib/action/flow/support"
-	"github.com/TIBCOSoftware/flogo-lib/core/action"
+	"github.com/TIBCOSoftware/flogo-lib/core/data"
 	"github.com/TIBCOSoftware/flogo-lib/core/trigger"
 	"github.com/TIBCOSoftware/flogo-lib/logger"
 	"github.com/eclipse/paho.mqtt.golang"
 )
 
 // log is the default package logger
-var log = logger.GetLogger("trigger-tibco-mqtt")
+var log = logger.GetLogger("trigger-flogo-mqtt")
 
 // MqttTrigger is simple MQTT trigger
 type MqttTrigger struct {
-	metadata         *trigger.Metadata
-	runner           action.Runner
-	client           mqtt.Client
-	config           *trigger.Config
-	topicToActionURI map[string]string
+	metadata       *trigger.Metadata
+	client         mqtt.Client
+	config         *trigger.Config
+	handlers       []*trigger.Handler
+	topicToHandler map[string]*trigger.Handler
 }
 
 //NewFactory create a new Trigger factory
@@ -45,12 +44,13 @@ func (t *MqttTrigger) Metadata() *trigger.Metadata {
 	return t.metadata
 }
 
-// Init implements ext.Trigger.Init
-func (t *MqttTrigger) Init(runner action.Runner) {
-	t.runner = runner
+// Initialize implements trigger.Initializable.Initialize
+func (t *MqttTrigger) Initialize(ctx trigger.InitContext) error {
+	t.handlers = ctx.GetHandlers()
+	return nil
 }
 
-// Start implements ext.Trigger.Start
+// Start implements trigger.Trigger.Start
 func (t *MqttTrigger) Start() error {
 
 	opts := mqtt.NewClientOptions()
@@ -58,7 +58,7 @@ func (t *MqttTrigger) Start() error {
 	opts.SetClientID(t.config.GetSetting("id"))
 	opts.SetUsername(t.config.GetSetting("user"))
 	opts.SetPassword(t.config.GetSetting("password"))
-	b, err := strconv.ParseBool(t.config.GetSetting("cleansess"))
+	b, err := data.CoerceToBoolean(t.config.Settings["cleansess"])
 	if err != nil {
 		log.Error("Error converting \"cleansess\" to a boolean ", err.Error())
 		return err
@@ -73,11 +73,11 @@ func (t *MqttTrigger) Start() error {
 		//TODO we should handle other types, since mqtt message format are data-agnostic
 		payload := string(msg.Payload())
 		log.Debug("Received msg:", payload)
-		actionURI, found := t.topicToActionURI[topic]
+		handler, found := t.topicToHandler[topic]
 		if found {
-			t.RunAction(actionURI, payload)
+			t.RunHandler(handler, payload)
 		} else {
-			log.Errorf("Topic %s not found", t.topicToActionURI[topic])
+			log.Errorf("handler for topic '%s' not found", topic)
 		}
 	})
 
@@ -87,24 +87,24 @@ func (t *MqttTrigger) Start() error {
 		panic(token.Error())
 	}
 
-	i, err := strconv.Atoi(t.config.GetSetting("qos"))
+	i, err := data.CoerceToDouble(t.config.Settings["qos"])
 	if err != nil {
 		log.Error("Error converting \"qos\" to an integer ", err.Error())
 		return err
 	}
 
-	t.topicToActionURI = make(map[string]string)
+	t.topicToHandler = make(map[string]*trigger.Handler)
 
-	for _, handlerCfg := range t.config.Handlers {
+	for _, handler := range t.handlers {
 
-		topic := handlerCfg.GetSetting("topic")
+		topic := handler.GetStringSetting("topic")
 
 		if token := t.client.Subscribe(topic, byte(i), nil); token.Wait() && token.Error() != nil {
 			log.Errorf("Error subscribing to topic %s: %s", topic, token.Error())
-			panic(token.Error())
+			return token.Error()
 		} else {
-			log.Debugf("Suscribed to topic: %s, will trigger actionId: %s", topic, handlerCfg.ActionId)
-			t.topicToActionURI[topic] = handlerCfg.ActionId
+			log.Debugf("Subscribed to topic: %s, will trigger handler: %s", topic, handler)
+			t.topicToHandler[topic] = handler
 		}
 	}
 
@@ -126,34 +126,38 @@ func (t *MqttTrigger) Stop() error {
 	return nil
 }
 
-// RunAction starts a new Process Instance
-func (t *MqttTrigger) RunAction(actionURI string, payload string) {
+// RunHandler runs the handler and associated action
+func (t *MqttTrigger) RunHandler(handler *trigger.Handler, payload string) {
 
-	req := t.constructStartRequest(payload)
-	//err := json.NewDecoder(strings.NewReader(payload)).Decode(req)
-	//if err != nil {
-	//	//http.Error(w, err.Error(), http.StatusBadRequest)
-	//	log.Error("Error Starting action ", err.Error())
-	//	return
-	//}
+	trgData := make(map[string]interface{})
+	trgData["message"] = payload
 
-	//todo handle error
-	startAttrs, _ := t.metadata.OutputsToAttrs(req.Data, false)
+	results, err := handler.Handle(context.Background(), trgData)
 
-	action := action.Get(actionURI)
-	context := trigger.NewContext(context.Background(), startAttrs)
-	_, replyData, err := t.runner.Run(context, action, actionURI, nil)
 	if err != nil {
 		log.Error("Error starting action: ", err.Error())
 	}
-	log.Debugf("Ran action: [%s]", actionURI)
+
+	log.Debugf("Ran Handler: [%s]", handler)
+
+	var replyData interface{}
+
+	if len(results) != 0 {
+		dataAttr, ok := results["data"]
+		if ok {
+			replyData = dataAttr.Value()
+		}
+	}
 
 	if replyData != nil {
-		data, err := json.Marshal(replyData)
+		dataJson, err := json.Marshal(replyData)
 		if err != nil {
 			log.Error(err)
 		} else {
-			t.publishMessage(req.ReplyTo, string(data))
+			replyTo := handler.GetStringSetting("topic")
+			if replyTo != "" {
+				t.publishMessage(replyTo, string(dataJson))
+			}
 		}
 	}
 }
@@ -179,22 +183,4 @@ func (t *MqttTrigger) publishMessage(topic string, message string) {
 		log.Errorf("Timeout occurred while trying to publish to topic '%s'", topic)
 		return
 	}
-}
-
-func (t *MqttTrigger) constructStartRequest(message string) *StartRequest {
-	//TODO how to handle reply to, reply feature
-	req := &StartRequest{}
-	data := make(map[string]interface{})
-	data["message"] = message
-	req.Data = data
-	return req
-}
-
-// StartRequest describes a request for starting a ProcessInstance
-type StartRequest struct {
-	ProcessURI  string                 `json:"flowUri"`
-	Data        map[string]interface{} `json:"data"`
-	Interceptor *support.Interceptor   `json:"interceptor"`
-	Patch       *support.Patch         `json:"patch"`
-	ReplyTo     string                 `json:"replyTo"`
 }

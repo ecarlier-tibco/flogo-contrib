@@ -1,9 +1,16 @@
-# tibco-rest
-This activity provides your flogo application the ability to cause an explicit error in the flow.
+---
+title: Error
+weight: 4610
+---
+
+# Error
+This activity allows you to cause an explicit error in the flow (throw an error).
 
 
 ## Installation
-
+### Flogo Web
+This activity comes out of the box with the Flogo Web UI
+### Flogo CLI
 ```bash
 flogo add activity github.com/TIBCOSoftware/flogo-contrib/activity/error
 ```
@@ -13,7 +20,7 @@ Inputs and Outputs:
 
 ```json
 {
-  "inputs":[
+  "input":[
     {
       "name": "message",
       "type": "string"
@@ -23,28 +30,30 @@ Inputs and Outputs:
       "type": "object"
     }
   ],
-  "outputs": [
+  "output": [
   ]
 }
 ```
+
 ## Settings
-| Setting     | Description    |
-|:------------|:---------------|
-| message     | The error message |         
-| data        | The error data |
+| Setting     | Required | Description |
+|:------------|:---------|:------------|
+| message     | False    | The error message you want to throw |         
+| data        | False    | The error data you want to throw |
 
 ## Configuration Examples
-
-Configure a task in flow cause a simple error with a message:
+The below example throws a simple error with a message:
 
 ```json
 {
-  "id": 3,
-  "type": 1,
-  "activityType": "tibco-error",
+  "id": "error_1",
   "name": "Throw Error",
-  "attributes": [
-    { "name": "message", "value": "Unexpected Threshold Value" }
-  ]
+  "description": "Simple Error Activity",
+  "activity": {
+    "ref": "github.com/TIBCOSoftware/flogo-contrib/activity/error",
+    "input": {
+      "message": "Unexpected Threshold Value"
+    }
+  }
 }
 ```
