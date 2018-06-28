@@ -1,4 +1,4 @@
-package aggregate
+package ercaggregate
 
 import (
 	"io/ioutil"

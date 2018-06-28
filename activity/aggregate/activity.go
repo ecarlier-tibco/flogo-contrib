@@ -1,13 +1,13 @@
-package aggregate
+package ercaggregate
 
 import (
 	"errors"
 	"sync"
 
-	"github.com/TIBCOSoftware/flogo-contrib/activity/aggregate/aggregator"
 	"github.com/TIBCOSoftware/flogo-lib/core/activity"
 	"github.com/TIBCOSoftware/flogo-lib/core/data"
 	"github.com/TIBCOSoftware/flogo-lib/logger"
+	"github.com/ecarlier-tibco/flogo-contrib/activity/aggregate/aggregator"
 )
 
 // activityLogger is the default logger for the Aggregate Activity
@@ -51,51 +51,56 @@ func (a *AggregateActivity) Metadata() *activity.Metadata {
 func (a *AggregateActivity) Eval(context activity.Context) (done bool, err error) {
 
 	aggregatorKey := context.ActivityHost().Name() + ":" + context.Name()
+	aggrNamesList, _ := context.GetInput(ivFunction).([]string)
+	resultsList := make(map[string]float64)
+	reportsList := make(map[string]bool)
 
-	a.mutex.RLock()
-	//get aggregator for activity, assumes flow & task names are unique
-	aggr, ok := a.aggregators[aggregatorKey]
+	for _, aggrName := range aggrNamesList {
 
-	a.mutex.RUnlock()
+		a.mutex.RLock()
+		//get aggregator for activity, assumes flow & task names are unique
+		aggr, ok := a.aggregators[aggregatorKey+":"+aggrName]
 
-	//if window not create for this flow, create it
+		a.mutex.RUnlock()
 
-	if !ok {
-
-		//go doesn't have lock upgrades or try, so do same check again
-
-		a.mutex.Lock()
-		aggr, ok = a.aggregators[aggregatorKey]
+		//if window not create for this flow, create it
 
 		if !ok {
-			windowSize, _ := context.GetInput(ivWindowSize).(int)
-			aggrName, _ := context.GetInput(ivFunction).(string)
 
-			factory := aggregator.GetFactory(aggrName)
+			//go doesn't have lock upgrades or try, so do same check again
 
-			if factory == nil {
-				return false, errors.New("Unknown aggregator: " + aggrName)
+			a.mutex.Lock()
+			aggr, ok = a.aggregators[aggregatorKey+":"+aggrName]
+
+			if !ok {
+				windowSize, _ := context.GetInput(ivWindowSize).(int)
+
+				factory := aggregator.GetFactory(aggrName)
+
+				if factory == nil {
+					return false, errors.New("Unknown aggregator: " + aggrName)
+				}
+
+				aggr = factory(windowSize)
+				a.aggregators[aggregatorKey+":"+aggrName] = aggr
+
+				activityLogger.Debug("Aggregator created for ", aggregatorKey)
 			}
 
-			aggr = factory(windowSize)
-			a.aggregators[aggregatorKey] = aggr
-
-			activityLogger.Debug("Aggregator created for ", aggregatorKey)
+			a.mutex.Unlock()
 		}
 
-		a.mutex.Unlock()
+		value, ok := context.GetInput(ivValue).(float64)
+
+		if !ok {
+			value, _ = data.CoerceToNumber(context.GetInput(ivValue))
+		}
+
+		reportsList[aggrName], resultsList[aggrName] = aggr.Add(value)
 	}
 
-	value, ok := context.GetInput(ivValue).(float64)
-
-	if !ok {
-		value, _ = data.CoerceToNumber(context.GetInput(ivValue))
-	}
-
-	report, result := aggr.Add(value)
-
-	context.SetOutput(ovReport, report)
-	context.SetOutput(ovResult, result)
+	context.SetOutput(ovReport, reportsList)
+	context.SetOutput(ovResult, resultsList)
 
 	return true, nil
 }
